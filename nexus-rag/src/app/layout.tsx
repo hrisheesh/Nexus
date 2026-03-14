@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/providers";
-import { Sidebar } from "@/components/sidebar";
+import { Navigation } from "@/components/navigation";
 import { SettingsProvider } from "@/components/settings-provider";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -22,9 +22,15 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider>
           <SettingsProvider>
-            <div className="flex h-screen overflow-hidden">
-              <Sidebar />
-              <main className="flex-1 overflow-hidden">
+            <div 
+              className="min-h-screen"
+              style={{ 
+                background: 'var(--apple-bg-primary)',
+                paddingTop: '80px'
+              }}
+            >
+              <Navigation />
+              <main className="w-full">
                 {children}
               </main>
             </div>

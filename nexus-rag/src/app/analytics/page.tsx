@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { BarChart3, MessageSquare, FileText, Clock, Zap } from 'lucide-react';
+import { BarChart3, MessageSquare, FileText, Clock, Zap, TrendingUp, Activity } from 'lucide-react';
 
 interface AnalyticsData {
   totalQueries: number;
@@ -47,105 +47,133 @@ export default function AnalyticsPage() {
   const hasData = stats.totalQueries > 0 || stats.documents > 0;
 
   const statCards = [
-    { label: 'Queries', value: stats.totalQueries.toLocaleString(), icon: MessageSquare },
-    { label: 'Tokens', value: (stats.totalTokens / 1000).toFixed(1) + 'K', icon: Zap },
-    { label: 'Latency', value: stats.avgLatency + 's', icon: Clock },
-    { label: 'Documents', value: stats.documents, icon: FileText },
+    { label: 'Total Queries', value: stats.totalQueries.toLocaleString(), icon: MessageSquare, color: 'var(--apple-accent)', bg: 'rgba(41, 151, 255, 0.1)' },
+    { label: 'Tokens Used', value: (stats.totalTokens / 1000).toFixed(1) + 'K', icon: Zap, color: 'var(--apple-accent-secondary)', bg: 'rgba(191, 90, 242, 0.1)' },
+    { label: 'Avg Latency', value: stats.avgLatency + 's', icon: Clock, color: 'var(--apple-success)', bg: 'rgba(48, 209, 88, 0.1)' },
+    { label: 'Documents', value: stats.documents, icon: FileText, color: 'var(--apple-warning)', bg: 'rgba(255, 214, 10, 0.1)' },
   ];
 
+  const timeRanges = ['24h', '7d', '30d', '90d'];
+
   return (
-    <div className="flex flex-col h-screen bg-[var(--md-sys-color-background)]">
-      {/* Header */}
-      <header className="flex items-center justify-between px-6 h-14 border-b border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)]">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[var(--md-sys-color-surface-variant)] flex items-center justify-center">
-            <BarChart3 size={16} className="text-[var(--md-sys-color-on-surface-variant)]" />
-          </div>
-          <div>
-            <h1 className="text-base font-medium text-[var(--md-sys-color-on-surface)]">Analytics</h1>
-            <p className="text-xs text-[var(--md-sys-color-on-surface-variant)]">Monitor your RAG application</p>
-          </div>
+    <div className="w-full min-h-[calc(100vh-80px)] flex flex-col items-center px-6">
+      {/* Page Header */}
+      <div className="w-full max-w-[1200px] flex items-center justify-between mb-10 animate-enter">
+        <div>
+          <h1 className="text-[48px] font-semibold tracking-tight mb-3" style={{ color: 'var(--apple-text-primary)' }}>
+            Analytics
+          </h1>
+          <p className="text-[20px]" style={{ color: 'var(--apple-text-secondary)' }}>
+            Monitor your RAG application performance
+          </p>
         </div>
-        <div className="flex gap-1 p-1 bg-[var(--md-sys-color-surface-variant)] rounded-lg">
-          {['24h', '7d', '30d', '90d'].map((range) => (
+        
+        {/* Time Range Selector */}
+        <div className="flex gap-1 p-1.5 rounded-full" style={{ background: 'var(--apple-bg-secondary)' }}>
+          {timeRanges.map((range) => (
             <button
               key={range}
               onClick={() => setTimeRange(range)}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+              className={`px-6 py-2.5 rounded-full text-[14px] font-medium transition-all ${
                 timeRange === range
-                  ? 'bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)] shadow-sm'
-                  : 'text-[var(--md-sys-color-on-surface-variant)] hover:text-[var(--md-sys-color-on-surface)]'
+                  ? ''
+                  : 'hover:bg-white/5'
               }`}
+              style={{ 
+                background: timeRange === range ? 'var(--apple-bg-primary)' : 'transparent',
+                color: timeRange === range ? 'var(--apple-text-primary)' : 'var(--apple-text-secondary)',
+                boxShadow: timeRange === range ? '0 2px 8px rgba(0,0,0,0.3)' : 'none'
+              }}
             >
               {range}
             </button>
           ))}
         </div>
-      </header>
-
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-3xl mx-auto px-6 py-6">
-          {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="w-6 h-6 border-2 border-[var(--md-sys-color-primary)] border-t-transparent rounded-full animate-spin" />
-            </div>
-          ) : !hasData ? (
-            <div className="text-center py-20">
-              <BarChart3 size={32} className="text-[var(--md-sys-color-on-surface-variant)] mx-auto mb-3 opacity-40" />
-              <p className="text-sm text-[var(--md-sys-color-on-surface-variant)]">No analytics data yet</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {/* Stats Grid */}
-              <div className="grid grid-cols-4 gap-3">
-                {statCards.map((stat, idx) => {
-                  const Icon = stat.icon;
-                  return (
-                    <div 
-                      key={stat.label}
-                      className="p-4 border border-[var(--md-sys-color-outline-variant)] rounded-xl animate-enter"
-                      style={{ animationDelay: `${idx * 0.03}s` }}
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        <Icon size={14} className="text-[var(--md-sys-color-on-surface-variant)]" strokeWidth={1.5} />
-                        <span className="text-[10px] text-[var(--md-sys-color-on-surface-variant)] uppercase">{stat.label}</span>
-                      </div>
-                      <p className="text-xl font-medium text-[var(--md-sys-color-on-surface)]">{stat.value}</p>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Knowledge Base */}
-              <div className="p-4 border border-[var(--md-sys-color-outline-variant)] rounded-xl">
-                <div className="flex items-center gap-2 mb-4">
-                  <FileText size={14} className="text-[var(--md-sys-color-on-surface-variant)]" strokeWidth={1.5} />
-                  <span className="text-xs text-[var(--md-sys-color-on-surface-variant)] uppercase">Knowledge Base</span>
-                </div>
-                
-                <div className="grid grid-cols-4 gap-4">
-                  <div className="text-center">
-                    <p className="text-2xl font-medium text-[var(--md-sys-color-on-surface)]">{stats.documents}</p>
-                    <p className="text-[10px] text-[var(--md-sys-color-on-surface-variant)]">Documents</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-2xl font-medium text-[var(--md-sys-color-on-surface)]">{stats.chunks.toLocaleString()}</p>
-                    <p className="text-[10px] text-[var(--md-sys-color-on-surface-variant)]">Chunks</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-2xl font-medium text-[var(--md-sys-color-on-surface)]">{stats.documents > 0 ? (stats.chunks / stats.documents).toFixed(0) : 0}</p>
-                    <p className="text-[10px] text-[var(--md-sys-color-on-surface-variant)]">Avg/Doc</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-2xl font-medium text-[var(--md-sys-color-on-surface)]">{stats.successRate}%</p>
-                    <p className="text-[10px] text-[var(--md-sys-color-on-surface-variant)]">Success</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
       </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-32">
+          <div 
+            className="w-8 h-8 border-2 rounded-full animate-spin"
+            style={{ borderColor: 'var(--apple-accent)', borderTopColor: 'transparent' }}
+          />
+        </div>
+      ) : !hasData ? (
+        <div className="text-center py-32 animate-enter">
+          <div 
+            className="w-28 h-28 rounded-[32px] bg-[var(--apple-bg-secondary)] flex items-center justify-center mx-auto mb-6"
+          >
+            <Activity size={48} style={{ color: 'var(--apple-text-tertiary)' }} />
+          </div>
+          <p className="text-[21px] font-medium mb-2" style={{ color: 'var(--apple-text-secondary)' }}>No analytics data yet</p>
+          <p className="text-[15px]" style={{ color: 'var(--apple-text-tertiary)' }}>Start chatting and uploading documents to see insights</p>
+        </div>
+      ) : (
+        <>
+          {/* Stats Grid */}
+          <div className="grid grid-cols-4 gap-5 mb-10">
+            {statCards.map((stat, idx) => {
+              const Icon = stat.icon;
+              return (
+                <div 
+                  key={stat.label}
+                  className="apple-card p-7"
+                  style={{ animationDelay: `${idx * 0.05}s` }}
+                >
+                  <div 
+                    className="w-12 h-12 rounded-[16px] flex items-center justify-center mb-5"
+                    style={{ background: stat.bg }}
+                  >
+                    <Icon size={24} style={{ color: stat.color }} />
+                  </div>
+                  <p className="text-[13px] font-medium uppercase tracking-wide mb-2" style={{ color: 'var(--apple-text-tertiary)' }}>
+                    {stat.label}
+                  </p>
+                  <p className="text-[36px] font-semibold tracking-tight" style={{ color: 'var(--apple-text-primary)' }}>
+                    {stat.value}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Knowledge Base Card */}
+          <div className="apple-card p-8">
+            <div className="flex items-center gap-3 mb-8">
+              <div 
+                className="w-10 h-10 rounded-[12px] flex items-center justify-center"
+                style={{ background: 'rgba(41, 151, 255, 0.1)' }}
+              >
+                <BarChart3 size={20} style={{ color: 'var(--apple-accent)' }} />
+              </div>
+              <h2 className="text-[20px] font-semibold" style={{ color: 'var(--apple-text-primary)' }}>
+                Knowledge Base
+              </h2>
+            </div>
+            
+            <div className="grid grid-cols-4 gap-8">
+              <div className="text-center py-4">
+                <p className="text-[42px] font-semibold" style={{ color: 'var(--apple-text-primary)' }}>{stats.documents}</p>
+                <p className="text-[14px] mt-2" style={{ color: 'var(--apple-text-tertiary)' }}>Documents</p>
+              </div>
+              <div className="text-center py-4">
+                <p className="text-[42px] font-semibold" style={{ color: 'var(--apple-text-primary)' }}>{stats.chunks.toLocaleString()}</p>
+                <p className="text-[14px] mt-2" style={{ color: 'var(--apple-text-tertiary)' }}>Total Chunks</p>
+              </div>
+              <div className="text-center py-4">
+                <p className="text-[42px] font-semibold" style={{ color: 'var(--apple-text-primary)' }}>
+                  {stats.documents > 0 ? (stats.chunks / stats.documents).toFixed(0) : 0}
+                </p>
+                <p className="text-[14px] mt-2" style={{ color: 'var(--apple-text-tertiary)' }}>Avg Chunks/Doc</p>
+              </div>
+              <div className="text-center py-4">
+                <p className="text-[42px] font-semibold" style={{ color: 'var(--apple-success)' }}>{stats.successRate}%</p>
+                <p className="text-[14px] mt-2" style={{ color: 'var(--apple-text-tertiary)' }}>Success Rate</p>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

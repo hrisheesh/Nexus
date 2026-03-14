@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { Upload, FileText, Trash2, Check, AlertCircle, X } from 'lucide-react';
+import { Upload, FileText, Trash2, Check, AlertCircle, X, File, Plus } from 'lucide-react';
 
 interface Document {
   id: string;
@@ -156,137 +156,176 @@ export default function DocumentsPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-[var(--md-sys-color-background)]">
-      <header className="flex items-center gap-3 px-6 h-14 border-b border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)]">
-        <div className="w-8 h-8 rounded-lg bg-[var(--md-sys-color-surface-variant)] flex items-center justify-center">
-          <FileText size={16} className="text-[var(--md-sys-color-on-surface-variant)]" />
-        </div>
-        <div>
-          <h1 className="text-base font-medium text-[var(--md-sys-color-on-surface)]">Documents</h1>
-          <p className="text-xs text-[var(--md-sys-color-on-surface-variant)]">{documents.length} files</p>
-        </div>
-      </header>
+    <div className="w-full min-h-[calc(100vh-80px)] flex flex-col items-center px-6">
+      {/* Page Header */}
+      <div className="w-full max-w-[1200px] mb-10 animate-enter">
+        <h1 className="text-[48px] font-semibold tracking-tight mb-3" style={{ color: 'var(--apple-text-primary)' }}>
+          Documents
+        </h1>
+        <p className="text-[20px]" style={{ color: 'var(--apple-text-secondary)' }}>
+          Upload and manage your knowledge base
+        </p>
+      </div>
 
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-3xl mx-auto px-6 py-6">
-          <div
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            className={`border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 ${
-              isDragging 
-                ? 'border-[var(--md-sys-color-primary)] bg-[var(--md-sys-color-primary-container)]/10' 
-                : 'border-[var(--md-sys-color-outline-variant)] hover:border-[var(--md-sys-color-outline)]'
-            }`}
+      {/* Upload Zone */}
+      <div
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        className={`w-full max-w-[1200px] apple-card p-14 text-center transition-all duration-300 ${
+          isDragging 
+            ? 'scale-[1.02] border-[var(--apple-accent)]' 
+            : 'hover:border-[var(--apple-text-tertiary)]'
+        }`}
+        style={{ borderColor: isDragging ? 'var(--apple-accent)' : 'var(--apple-border-light)' }}
+      >
+        <input
+          type="file"
+          id="file-upload"
+          multiple
+          onChange={handleFileSelect}
+          className="hidden"
+          accept=".pdf,.txt,.md,.csv,.docx"
+        />
+        
+        <div className="flex flex-col items-center">
+          <div 
+            className="w-20 h-20 rounded-[24px] bg-[var(--apple-bg-tertiary)] flex items-center justify-center mb-6"
           >
-            <input
-              type="file"
-              id="file-upload"
-              multiple
-              onChange={handleFileSelect}
-              className="hidden"
-              accept=".pdf,.txt,.md,.csv,.docx"
-            />
-            
-            <label
-              htmlFor="file-upload"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] rounded-lg text-sm font-medium cursor-pointer hover:opacity-90 transition-opacity"
-            >
-              <Upload size={16} />
-              <span>Select Files</span>
-            </label>
-            <p className="text-xs text-[var(--md-sys-color-on-surface-variant)] mt-3">
-              PDF, Markdown, TXT, CSV, DOCX (max 50MB)
-            </p>
+            <Upload size={32} style={{ color: 'var(--apple-accent)' }} />
           </div>
-
-          {uploadQueue.length > 0 && (
-            <div className="mt-4 space-y-2">
-              {uploadQueue.map((upload, idx) => (
-                <div key={idx} className="flex items-center gap-3 p-3 bg-[var(--md-sys-color-surface-variant)] rounded-lg">
-                  <FileText size={16} className="text-[var(--md-sys-color-on-surface-variant)]" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-[var(--md-sys-color-on-surface)] truncate">{upload.fileName}</p>
-                    <div className="h-1 mt-1 bg-[var(--md-sys-color-outline-variant)] rounded-full overflow-hidden">
-                      <div 
-                        className={`h-full transition-all duration-300 ${
-                          upload.status === 'error' ? 'bg-red-500' : upload.status === 'complete' ? 'bg-green-500' : 'bg-[var(--md-sys-color-primary)]'
-                        }`}
-                        style={{ width: upload.status === 'complete' ? '100%' : `${upload.progress}%` }}
-                      />
-                    </div>
-                  </div>
-                  {upload.status === 'processing' && <Check size={14} className="animate-spin text-[var(--md-sys-color-primary)]" />}
-                  {upload.status === 'complete' && <Check size={14} className="text-green-500" />}
-                  {upload.status === 'error' && <AlertCircle size={14} className="text-red-500" />}
-                  <button onClick={() => removeFromQueue(idx)} className="p-1">
-                    <X size={14} className="text-[var(--md-sys-color-on-surface-variant)]" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {documents.length > 0 ? (
-            <div className="mt-4 border border-[var(--md-sys-color-outline-variant)] rounded-xl overflow-hidden">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)]">
-                    <th className="text-left px-4 py-3 text-xs font-medium text-[var(--md-sys-color-on-surface-variant)]">Name</th>
-                    <th className="text-left px-4 py-3 text-xs font-medium text-[var(--md-sys-color-on-surface-variant)] w-20">Size</th>
-                    <th className="text-left px-4 py-3 text-xs font-medium text-[var(--md-sys-color-on-surface-variant)] w-24">Date</th>
-                    <th className="text-left px-4 py-3 text-xs font-medium text-[var(--md-sys-color-on-surface-variant)] w-20">Chunks</th>
-                    <th className="text-left px-4 py-3 text-xs font-medium text-[var(--md-sys-color-on-surface-variant)] w-24">Status</th>
-                    <th className="text-right px-4 py-3 text-xs font-medium text-[var(--md-sys-color-on-surface-variant)] w-20">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {documents.map((doc) => (
-                    <tr key={doc.id} className="border-b border-[var(--md-sys-color-outline-variant)] last:border-0 hover:bg-[var(--md-sys-color-surface)]">
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <FileText size={14} className="text-[var(--md-sys-color-on-surface-variant)]" />
-                          <span className="text-sm text-[var(--md-sys-color-on-surface)] truncate max-w-[250px]">{doc.name}</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-[var(--md-sys-color-on-surface-variant)]">{doc.sizeFormatted}</td>
-                      <td className="px-4 py-3 text-sm text-[var(--md-sys-color-on-surface-variant)]">
-                        {new Date(doc.uploadedAt).toLocaleDateString()}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-[var(--md-sys-color-on-surface-variant)]">{doc.chunks}</td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${
-                          doc.status === 'ready' ? 'text-green-700 bg-green-50 dark:bg-green-900/20' :
-                          doc.status === 'processing' ? 'text-amber-700 bg-amber-50 dark:bg-amber-900/20' :
-                          'text-red-700 bg-red-50 dark:bg-red-900/20'
-                        }`}>
-                          {doc.status === 'ready' && <Check size={10} />}
-                          {doc.status === 'processing' && <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />}
-                          {doc.status === 'error' && <AlertCircle size={10} />}
-                          {doc.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center justify-end gap-1">
-                          <button onClick={() => handleDelete(doc.id)} className="p-1.5 rounded text-[var(--md-sys-color-on-surface-variant)] hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20">
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : uploadQueue.length === 0 ? (
-            <div className="mt-8 text-center py-12">
-              <FileText size={32} className="text-[var(--md-sys-color-on-surface-variant)] mx-auto mb-3 opacity-40" />
-              <p className="text-sm text-[var(--md-sys-color-on-surface-variant)]">No documents yet</p>
-              <p className="text-xs text-[var(--md-sys-color-on-surface-variant)] mt-1">Upload files to get started</p>
-            </div>
-          ) : null}
+          <label
+            htmlFor="file-upload"
+            className="apple-button apple-button-primary"
+          >
+            <Plus size={18} />
+            <span>Upload Files</span>
+          </label>
+          <p className="text-[15px] mt-5" style={{ color: 'var(--apple-text-tertiary)' }}>
+            PDF, Markdown, TXT, CSV, DOCX (max 50MB)
+          </p>
         </div>
       </div>
+
+      {/* Upload Queue */}
+      {uploadQueue.length > 0 && (
+        <div className="mt-6 space-y-3">
+          {uploadQueue.map((upload, idx) => (
+            <div 
+              key={idx} 
+              className="flex items-center gap-4 p-4 apple-card"
+            >
+              <div 
+                className="w-12 h-12 rounded-[14px] flex items-center justify-center"
+                style={{ 
+                  background: upload.status === 'error' ? 'rgba(255, 69, 58, 0.1)' : 
+                             upload.status === 'complete' ? 'rgba(48, 209, 88, 0.1)' : 
+                             'rgba(41, 151, 255, 0.1)' 
+                }}
+              >
+                {upload.status === 'complete' ? (
+                  <Check size={20} style={{ color: 'var(--apple-success)' }} />
+                ) : upload.status === 'error' ? (
+                  <AlertCircle size={20} style={{ color: 'var(--apple-error)' }} />
+                ) : (
+                  <File size={20} style={{ color: 'var(--apple-accent)' }} />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[15px] font-medium truncate" style={{ color: 'var(--apple-text-primary)' }}>{upload.fileName}</p>
+                <div className="h-1.5 mt-3 rounded-full overflow-hidden" style={{ background: 'var(--apple-bg-tertiary)' }}>
+                  <div 
+                    className="h-full transition-all duration-500"
+                    style={{ 
+                      width: upload.status === 'complete' ? '100%' : `${upload.progress}%`,
+                      background: upload.status === 'error' ? 'var(--apple-error)' : 
+                                 upload.status === 'complete' ? 'var(--apple-success)' : 
+                                 'var(--apple-accent)'
+                    }}
+                  />
+                </div>
+              </div>
+              <button 
+                onClick={() => removeFromQueue(idx)} 
+                className="p-2 rounded-[10px] hover:bg-[var(--apple-bg-tertiary)] transition-colors"
+              >
+                <X size={18} style={{ color: 'var(--apple-text-tertiary)' }} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Documents Grid */}
+      {documents.length > 0 ? (
+        <div className="mt-10">
+          <h2 className="text-[21px] font-semibold mb-6" style={{ color: 'var(--apple-text-primary)' }}>
+            Your Documents ({documents.length})
+          </h2>
+          
+          <div className="grid grid-cols-3 gap-5">
+            {documents.map((doc) => (
+              <div 
+                key={doc.id} 
+                className="apple-card p-6"
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div 
+                    className="w-12 h-12 rounded-[14px] flex items-center justify-center"
+                    style={{ background: 'rgba(41, 151, 255, 0.1)' }}
+                  >
+                    <FileText size={22} style={{ color: 'var(--apple-accent)' }} />
+                  </div>
+                  
+                  <button 
+                    onClick={() => handleDelete(doc.id)} 
+                    className="p-2 rounded-[10px] hover:bg-[var(--apple-error)/10] transition-colors"
+                    style={{ color: 'var(--apple-text-tertiary)' }}
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+                
+                <h3 className="text-[17px] font-medium truncate mb-2" style={{ color: 'var(--apple-text-primary)' }}>
+                  {doc.name}
+                </h3>
+                
+                <div className="flex items-center gap-3 mb-3">
+                  <span 
+                    className={`apple-badge ${
+                      doc.status === 'ready' ? 'apple-badge-green' :
+                      doc.status === 'processing' ? 'apple-badge-yellow' :
+                      'apple-badge-red'
+                    }`}
+                  >
+                    {doc.status === 'ready' && <Check size={10} />}
+                    {doc.status === 'processing' && <span className="w-2 h-2 rounded-full bg-[var(--apple-warning)] animate-pulse" />}
+                    {doc.status === 'error' && <AlertCircle size={10} />}
+                    {doc.status}
+                  </span>
+                  <span className="text-[13px]" style={{ color: 'var(--apple-text-tertiary)' }}>
+                    {doc.chunks} chunks
+                  </span>
+                </div>
+                
+                <p className="text-[13px]" style={{ color: 'var(--apple-text-tertiary)' }}>
+                  {doc.sizeFormatted} • {new Date(doc.uploadedAt).toLocaleDateString()}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : uploadQueue.length === 0 ? (
+        <div className="mt-20 text-center py-16 animate-enter">
+          <div 
+            className="w-24 h-24 rounded-[28px] bg-[var(--apple-bg-secondary)] flex items-center justify-center mx-auto mb-6"
+          >
+            <FileText size={36} style={{ color: 'var(--apple-text-tertiary)' }} />
+          </div>
+          <p className="text-[21px] font-medium mb-2" style={{ color: 'var(--apple-text-secondary)' }}>No documents yet</p>
+          <p className="text-[15px]" style={{ color: 'var(--apple-text-tertiary)' }}>Upload files to build your knowledge base</p>
+        </div>
+      ) : null}
     </div>
   );
 }

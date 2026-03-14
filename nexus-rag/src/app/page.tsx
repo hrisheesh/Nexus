@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
+import { Bot, User, Paperclip, ArrowUp, Sparkles } from 'lucide-react';
 
 interface Message {
   id: string;
@@ -47,7 +46,7 @@ export default function Home() {
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 120) + 'px';
+      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 150) + 'px';
     }
   }, [input]);
 
@@ -104,105 +103,100 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-[var(--md-sys-color-background)]">
-      {/* Header */}
-      <header className="flex items-center gap-3 px-4 h-14 border-b border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)]">
-        <Link 
-          href="/" 
-          className="lg:hidden p-2 -ml-2 rounded-full text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-variant)]"
-        >
-          <ArrowLeft size={20} />
-        </Link>
-        <div className="w-8 h-8 rounded-full bg-[var(--md-sys-color-primary-container)] flex items-center justify-center">
-          <Bot size={16} className="text-[var(--md-sys-color-on-primary-container)]" />
+    <div className="w-full min-h-[calc(100vh-80px)] flex flex-col items-center">
+      {/* Hero Section */}
+      {messages.length === 0 && (
+        <div className="flex-1 flex flex-col items-center justify-center py-20 animate-enter">
+          <div 
+            className="w-32 h-32 rounded-[36px] bg-gradient-to-br from-[var(--apple-accent)] to-[var(--apple-accent-secondary)] flex items-center justify-center mb-10 shadow-2xl"
+            style={{ boxShadow: '0 30px 60px rgba(41, 151, 255, 0.3)' }}
+          >
+            <Sparkles size={52} className="text-white" />
+          </div>
+          <h1 className="text-[56px] font-semibold tracking-tight mb-4" style={{ color: 'var(--apple-text-primary)' }}>
+            NexusRAG
+          </h1>
+          <p className="text-[22px] text-center max-w-[700px]" style={{ color: 'var(--apple-text-secondary)' }}>
+            Your intelligent AI assistant powered by advanced retrieval. 
+            Upload documents and ask anything.
+          </p>
         </div>
-        <div>
-          <h1 className="text-sm font-medium text-[var(--md-sys-color-on-surface)]">NexusRAG</h1>
-          <p className="text-xs text-[var(--md-sys-color-on-surface-variant)]">AI Assistant</p>
-        </div>
-      </header>
+      )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
-          {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)] text-center">
-              <div className="w-16 h-16 rounded-2xl bg-[var(--md-sys-color-primary-container)] flex items-center justify-center mb-4">
-                <Bot size={28} className="text-[var(--md-sys-color-on-primary-container)]" />
-              </div>
-              <h2 className="text-lg font-normal text-[var(--md-sys-color-on-surface)] mb-1">
-                How can I help you today?
-              </h2>
-              <p className="text-sm text-[var(--md-sys-color-on-surface-variant)]">
-                Upload documents and ask me anything about them.
-              </p>
+      <div className="w-full max-w-[900px] px-6">
+        {messages.map((message) => (
+          <div
+            key={message.id}
+            className="flex gap-5 mb-8 animate-enter"
+          >
+            {/* Avatar */}
+            <div 
+              className={`flex-shrink-0 w-11 h-11 rounded-[14px] flex items-center justify-center mt-1 ${
+                message.role === 'user' 
+                  ? 'bg-[var(--apple-bg-tertiary)]' 
+                  : 'bg-gradient-to-br from-[var(--apple-accent)] to-[var(--apple-accent-secondary)]'
+              }`}
+            >
+              {message.role === 'user' 
+                ? <User size={18} style={{ color: 'var(--apple-text-secondary)' }} />
+                : <Bot size={18} className="text-white" />
+              }
             </div>
-          ) : (
-            messages.map((message, index) => (
-              <div
-                key={message.id}
-                className={`flex gap-3 animate-enter ${message.role === 'user' ? 'flex-row-reverse' : ''}`}
-                style={{ animationDelay: `${index * 0.03}s` }}
-              >
-                {/* Avatar */}
-                <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                  message.role === 'user' 
-                    ? 'bg-[var(--md-sys-color-primary)]' 
-                    : 'bg-[var(--md-sys-color-primary-container)]'
-                }`}>
-                  {message.role === 'user' 
-                    ? <User size={14} className="text-[var(--md-sys-color-on-primary)]" />
-                    : <Bot size={14} className="text-[var(--md-sys-color-on-primary-container)]" />
-                  }
-                </div>
 
-                {/* Content */}
-                <div className={`flex-1 min-w-0 max-w-[75%] ${message.role === 'user' ? 'text-right' : ''}`}>
-                  <div className={`inline-block text-sm leading-relaxed text-left ${
-                    message.role === 'user'
-                      ? 'bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)] px-4 py-2.5 rounded-2xl rounded-br-md'
-                      : 'text-[var(--md-sys-color-on-surface)]'
-                  }`}>
-                    {message.isLoading ? (
-                      <div className="flex gap-1 py-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[var(--md-sys-color-on-surface-variant)] loading-dot" />
-                        <span className="w-1.5 h-1.5 rounded-full bg-[var(--md-sys-color-on-surface-variant)] loading-dot" />
-                        <span className="w-1.5 h-1.5 rounded-full bg-[var(--md-sys-color-on-surface-variant)] loading-dot" />
-                      </div>
-                    ) : (
-                      message.content
-                    )}
+            {/* Content */}
+            <div className="flex-1 min-w-0 pt-2">
+              <div className="text-[18px] leading-relaxed" style={{ color: 'var(--apple-text-primary)' }}>
+                {message.isLoading ? (
+                  <div className="flex gap-1.5 py-1">
+                    <span className="w-2 h-2 rounded-full" style={{ background: 'var(--apple-text-tertiary)', animation: 'pulse 1.5s ease-in-out infinite' }} />
+                    <span className="w-2 h-2 rounded-full" style={{ background: 'var(--apple-text-tertiary)', animation: 'pulse 1.5s ease-in-out 0.15s infinite' }} />
+                    <span className="w-2 h-2 rounded-full" style={{ background: 'var(--apple-text-tertiary)', animation: 'pulse 1.5s ease-in-out 0.3s infinite' }} />
                   </div>
-
-                  {/* Sources */}
-                  {!message.isLoading && message.sources && message.sources.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {message.sources.map((source, idx) => (
-                        <span 
-                          key={idx}
-                          className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-[var(--md-sys-color-surface-variant)] text-xs text-[var(--md-sys-color-on-surface-variant)]"
-                        >
-                          <span className="w-1 h-1 rounded-full bg-[var(--md-sys-color-primary)]" />
-                          {source.documentName}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                ) : (
+                  message.content
+                )}
               </div>
-            ))
-          )}
-          <div ref={messagesEndRef} />
-        </div>
+
+              {/* Sources */}
+              {!message.isLoading && message.sources && message.sources.length > 0 && (
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {message.sources.map((source, idx) => (
+                    <span 
+                      key={idx}
+                      className="apple-badge apple-badge-blue"
+                    >
+                      {source.documentName}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Input */}
-      <div className="px-4 pb-4 pt-2 bg-[var(--md-sys-color-surface)]">
+      <div className="w-full max-w-[900px] px-6 pb-10">
         <form 
           onSubmit={handleSubmit}
-          className="max-w-3xl mx-auto relative"
+          className="relative"
         >
-          <div className="flex items-end gap-2 bg-[var(--md-sys-color-surface-variant)] rounded-[28px] px-2 py-1.5 focus-within:ring-2 focus-within:ring-[var(--md-sys-color-primary)]/30 transition-shadow">
+          <div 
+            className="flex items-end gap-3 p-3 rounded-[28px] border"
+            style={{ 
+              background: 'var(--apple-bg-secondary)',
+              borderColor: 'var(--apple-border-light)',
+            }}
+          >
+            <button
+              type="button"
+              className="p-3.5 rounded-full transition-colors"
+              style={{ color: 'var(--apple-text-tertiary)' }}
+            >
+              <Paperclip size={21} />
+            </button>
             <textarea
               ref={textareaRef}
               value={input}
@@ -213,20 +207,29 @@ export default function Home() {
                   handleSubmit(e);
                 }
               }}
-              placeholder="Message..."
-              className="flex-1 bg-transparent resize-none min-h-[24px] max-h-[120px] py-2 px-3 text-sm text-[var(--md-sys-color-on-surface)] placeholder:text-[var(--md-sys-color-on-surface-variant)] outline-none"
+              placeholder="Ask me anything..."
+              className="flex-1 bg-transparent resize-none min-h-[24px] max-h-[150px] py-3.5 text-[18px]"
+              style={{ 
+                color: 'var(--apple-text-primary)',
+                outline: 'none'
+              }}
               rows={1}
               disabled={isLoading}
             />
             <button
               type="submit"
               disabled={!input.trim() || isLoading}
-              className="w-9 h-9 flex items-center justify-center rounded-full bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity flex-shrink-0"
+              className="w-11 h-11 flex items-center justify-center rounded-full transition-all disabled:opacity-40"
+              style={{ 
+                background: 'var(--apple-accent)',
+                color: 'white',
+                opacity: input.trim() && !isLoading ? 1 : 0.4
+              }}
             >
-              <Send size={16} strokeWidth={2} />
+              <ArrowUp size={20} strokeWidth={2.5} />
             </button>
           </div>
-          <p className="text-center text-[10px] text-[var(--md-sys-color-on-surface-variant)] mt-2">
+          <p className="text-center text-[12px] mt-5" style={{ color: 'var(--apple-text-tertiary)' }}>
             AI can make mistakes. Verify important information.
           </p>
         </form>
