@@ -6,3 +6,4 @@ export * from './llm';
 export * from './chunking';
 export * from './text-extraction';
 export * from './validation';
+export * from './document';

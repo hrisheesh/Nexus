@@ -15,12 +15,30 @@ interface Message {
   isLoading?: boolean;
 }
 
+interface Settings {
+  provider?: 'openrouter' | 'nvidia';
+  openrouterApiKey?: string;
+  nvidiaApiKey?: string;
+  selectedModel?: string;
+}
+
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const getSettings = (): Settings => {
+    if (typeof window === 'undefined') return {};
+    try {
+      const stored = localStorage.getItem('nexus-rag-settings');
+      if (stored) {
+        return JSON.parse(stored).state || {};
+      }
+    } catch {}
+    return {};
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -37,6 +55,7 @@ export default function Home() {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
 
+    const settings = getSettings();
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
@@ -58,7 +77,11 @@ export default function Home() {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMessage.content }),
+        body: JSON.stringify({ 
+          message: userMessage.content,
+          provider: settings.provider || 'openrouter',
+          model: settings.selectedModel,
+        }),
       });
 
       if (!response.ok) throw new Error('Failed to get response');

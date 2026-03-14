@@ -1,72 +1,88 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { chat, type LLMProvider } from '@/lib/llm';
+
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY;
+const DEFAULT_MODEL = process.env.DEFAULT_MODEL || 'openrouter/auto';
+const NVIDIA_MODEL = process.env.NVIDIA_MODEL || 'nvidia/llama-4-maverick-17b-128e-instruct';
 
 export async function POST(req: NextRequest) {
   try {
-    const { message, settings } = await req.json();
+    const body = await req.json();
+    const message = body.message;
 
     if (!message) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 });
     }
 
-    if (!settings?.model) {
-      return NextResponse.json({ error: 'Model not configured' }, { status: 400 });
-    }
-
-    const openrouterKey = settings.openrouterApiKey || process.env.OPENROUTER_API_KEY;
+    const provider = (body.provider as LLMProvider) || 'openrouter';
     
-    if (!openrouterKey) {
-      return NextResponse.json({ 
-        response: 'Please configure your OpenRouter API key in Settings.',
-        sources: []
-      });
+    let model: string;
+    let actualProvider: LLMProvider;
+    
+    if (provider === 'nvidia') {
+      actualProvider = 'nvidia';
+      model = body.model || NVIDIA_MODEL;
+    } else {
+      actualProvider = 'openrouter';
+      model = body.model || DEFAULT_MODEL;
     }
 
-    const systemPrompt = `You are a helpful AI assistant that answers questions based on the provided context from documents. 
-    - Always base your answers on the provided context when available.
-    - If the context doesn't contain enough information, say so clearly.
-    - Be concise and direct in your responses.
-    - Use bullet points when listing multiple items.
-    - Always cite your sources when using context.`;
+    const temperature = body.temperature || 0.7;
 
-    const contextSection = settings.context && settings.context.length > 0
-      ? `\n\nRelevant context from documents:\n${settings.context.join('\n\n')}`
-      : '\n\nNo documents have been uploaded yet. If the user asks about documents, please let them know they need to upload documents first.';
-
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openrouterKey}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'http://localhost:3000',
-        'X-Title': 'NexusRAG',
-      },
-      body: JSON.stringify({
-        model: settings.model,
-        messages: [
-          { role: 'system', content: systemPrompt + contextSection },
-          { role: 'user', content: message },
-        ],
-        temperature: settings.temperature || 0.7,
-        stream: false,
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error?.message || 'Failed to get response from LLM');
+    let apiKey: string;
+    if (actualProvider === 'nvidia') {
+      apiKey = NVIDIA_API_KEY || '';
+      if (!apiKey) {
+        return NextResponse.json({ 
+          response: 'NVIDIA API key not configured. Please add NVIDIA_API_KEY to .env',
+          sources: []
+        });
+      }
+    } else {
+      apiKey = OPENROUTER_API_KEY || '';
+      if (!apiKey) {
+        return NextResponse.json({ 
+          response: 'OpenRouter API key not configured. Please add OPENROUTER_API_KEY to .env',
+          sources: []
+        });
+      }
     }
 
-    const data = await response.json();
-    const assistantMessage = data.choices?.[0]?.message?.content || 'I apologize, but I could not generate a response.';
+    console.log('\n========== CHAT REQUEST ==========');
+    console.log('Provider:', actualProvider);
+    console.log('Model:', model);
+    console.log('Message:', message.substring(0, 100) + (message.length > 100 ? '...' : ''));
+    console.log('===================================\n');
+
+    const systemPrompt = `You are a helpful AI assistant. Be concise and friendly.`;
+
+    const response = await chat({
+      model,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: message },
+      ],
+      temperature,
+      provider: actualProvider,
+    }, apiKey);
+
+    const assistantMessage = response.choices?.[0]?.message?.content || 'I could not generate a response.';
+
+    console.log('\n========== CHAT RESPONSE =========');
+    console.log('Response:', assistantMessage.substring(0, 200) + (assistantMessage.length > 200 ? '...' : ''));
+    console.log('===================================\n');
 
     return NextResponse.json({
       response: assistantMessage,
       sources: [],
     });
   } catch (error) {
-    console.error('Chat API error:', error);
+    console.error('\n========== CHAT ERROR =========');
+    console.error(error);
+    console.error('==============================\n');
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal server error' },
+      { error: error instanceof Error ? error.message : 'Failed to get response' },
       { status: 500 }
     );
   }
